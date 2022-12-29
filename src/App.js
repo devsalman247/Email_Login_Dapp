@@ -35,6 +35,15 @@ function App() {
 		// console.log(userAccounts);
 	};
 
+	const handleLogout = async () => {
+		if (!web3auth) {
+			console.log("web3auth not initialized yet");
+			return;
+		}
+		await web3auth.logout();
+		setAddress("");
+	};
+
 	useEffect(() => {
 		localStorage.clear();
 		const init = async () => {
@@ -67,6 +76,7 @@ function App() {
 				<>
 					<p>Connected: true</p>
 					<p>Your wallet: {address}</p>
+					<button onClick={handleLogout}>Disconnect</button>
 				</>
 			)}
 		</div>
