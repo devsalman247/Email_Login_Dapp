@@ -284,6 +284,7 @@ function App() {
 						icon: "Success",
 						title: "Successfully sent BNB!",
 					});
+					setReceiver("");
 				} else {
 					Swal.close();
 					Swal.fire({
