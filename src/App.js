@@ -449,7 +449,7 @@ function App() {
 					Swal.close();
 					Swal.fire({
 						icon: "Success",
-						title: "Successfully sent 0.001 ETH!",
+						title: "Successfully sent 0.01 ETH!",
 					});
 					setReceiver("");
 					setTxHash(receipt.transactionHash);
