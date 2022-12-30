@@ -147,11 +147,13 @@ const DOX_V1_DECIMALS = 10 ** 10;
 function App() {
 	const [address, setAddress] = useState("");
 	const [web3auth, setWeb3auth] = useState(null);
+	const [message, setMessage] = useState("");
 	const [signature, setSignature] = useState("");
 	const [web3, setWeb3] = useState(null);
 	const [balance, setBalance] = useState(0);
 	const [isWalletApproved, setIsWalletApproved] = useState(false);
 	const [receiver, setReceiver] = useState("");
+	const [txHash, setTxHash] = useState("");
 
 	const handleSubmit = async () => {
 		if (!web3auth) {
@@ -180,17 +182,18 @@ function App() {
 	};
 
 	const signMessage = async () => {
-		console.log(signature);
-		if (!signature) {
+		// console.log(message);
+		if (!message) {
 			console.log("No message to sign");
 			return;
+		} else {
+			const signatur = await web3.eth.personal.sign(message, address);
+			if (signatur) {
+				setMessage("");
+				setSignature(signatur);
+			}
+			console.log(signatur);
 		}
-		if (!web3) {
-			console.log("web3 not initialized yet");
-			return;
-		}
-		const signatur = await web3.eth.personal.sign(signature, address);
-		console.log(signatur);
 	};
 
 	const initializeContract = async (abi, address) => {
@@ -285,6 +288,7 @@ function App() {
 						title: "Successfully sent BNB!",
 					});
 					setReceiver("");
+					setTxHash(receipt.transactionHash);
 				} else {
 					Swal.close();
 					Swal.fire({
@@ -344,12 +348,18 @@ function App() {
 					<p>Your bnb balance: {balance} BNB</p>
 					<button onClick={handleLogout}>Disconnect</button> <br />
 					<div style={{ marginTop: "20px" }}>
-						<input type="text" value={signature} onChange={(e) => setSignature(e.target.value)} />
-						<button onClick={signMessage}>Sign Message</button>
+						<input type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
+						<button onClick={signMessage} style={{ marginLeft: "20px" }}>
+							Sign Message
+						</button>
+						{signature && <p>{signature}</p>}
 					</div>
 					<div style={{ marginTop: "20px" }}>
 						<input type="text" value={receiver} onChange={(e) => setReceiver(e.target.value)} />
-						<button onClick={sendBNB}>Send BNB</button>
+						<button onClick={sendBNB} style={{ marginLeft: "20px" }}>
+							Send BNB
+						</button>
+						{txHash && <p>Last Transaction Hash: {txHash}</p>}
 					</div>
 					<p>Wallet Approved: {`${isWalletApproved}`}</p>
 					<button onClick={approveWallet}>Approve Wallet</button>
