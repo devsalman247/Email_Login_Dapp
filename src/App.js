@@ -151,6 +151,7 @@ function App() {
 	const [web3, setWeb3] = useState(null);
 	const [balance, setBalance] = useState(0);
 	const [isWalletApproved, setIsWalletApproved] = useState(false);
+	const [receiver, setReceiver] = useState("");
 
 	const handleSubmit = async () => {
 		if (!web3auth) {
@@ -245,7 +246,7 @@ function App() {
 		}
 	};
 
-	const checkApproval = async (tierNum, tier) => {
+	const checkApproval = async () => {
 		try {
 			const contract_instance = await initializeContract(DOX_V1_CONTRACT_ABI, DOX_V1_CONTRACT_ADDRESS);
 			if (address) {
@@ -257,6 +258,48 @@ function App() {
 		} catch (error) {
 			console.log(error);
 			return;
+		}
+	};
+
+	const sendBNB = async () => {
+		if (receiver) {
+			Swal.fire({
+				title: `Sending BNB to ${receiver.slice(0, 5)}...`,
+				html: "Please wait!",
+				didOpen: () => {
+					Swal.showLoading();
+				},
+			});
+			try {
+				const amount = web3.utils.toWei("0.001");
+				const receipt = await web3.eth.sendTransaction({
+					from: address,
+					to: receiver,
+					value: amount,
+				});
+				console.log(receipt);
+				if (receipt) {
+					Swal.close();
+					Swal.fire({
+						icon: "Success",
+						title: "Successfully sent BNB!",
+					});
+				} else {
+					Swal.close();
+					Swal.fire({
+						icon: "error",
+						title: "Failed to send BNB!...",
+					});
+				}
+			} catch (error) {
+				console.log(error);
+				Swal.close();
+				Swal.fire({
+					icon: "error",
+					title: "Failed to send BNB!",
+				});
+				return;
+			}
 		}
 	};
 
@@ -288,7 +331,7 @@ function App() {
 			}
 		};
 		init();
-		checkApproval();
+		if (address) checkApproval();
 	}, []);
 
 	return (
@@ -302,6 +345,10 @@ function App() {
 					<div style={{ marginTop: "20px" }}>
 						<input type="text" value={signature} onChange={(e) => setSignature(e.target.value)} />
 						<button onClick={signMessage}>Sign Message</button>
+					</div>
+					<div style={{ marginTop: "20px" }}>
+						<input type="text" value={receiver} onChange={(e) => setReceiver(e.target.value)} />
+						<button onClick={sendBNB}>Send BNB</button>
 					</div>
 					<p>Wallet Approved: {`${isWalletApproved}`}</p>
 					<button onClick={approveWallet}>Approve Wallet</button>
