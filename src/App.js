@@ -2,7 +2,6 @@
 import { Web3Auth } from "@web3auth/modal";
 import Web3 from "web3";
 import { useState, useEffect } from "react";
-import "./App.css";
 import Swal from "sweetalert2";
 const DOX_V1_CONTRACT_ADDRESS = "0xF3e5a8b4b290F0841506076E086f09Ec1184fC78";
 const DOX_V1_CONTRACT_ABI = [
@@ -264,10 +263,10 @@ function App() {
 		}
 	};
 
-	const sendBNB = async () => {
+	const sendETH = async () => {
 		if (receiver) {
 			Swal.fire({
-				title: `Sending BNB to ${receiver.slice(0, 5)}...`,
+				title: `Sending ETH to ${receiver.slice(0, 5)}...`,
 				html: "Please wait!",
 				didOpen: () => {
 					Swal.showLoading();
@@ -285,7 +284,7 @@ function App() {
 					Swal.close();
 					Swal.fire({
 						icon: "Success",
-						title: "Successfully sent BNB!",
+						title: "Successfully sent 0.001 ETH!",
 					});
 					setReceiver("");
 					setTxHash(receipt.transactionHash);
@@ -293,7 +292,7 @@ function App() {
 					Swal.close();
 					Swal.fire({
 						icon: "error",
-						title: "Failed to send BNB!...",
+						title: "Failed to send ETH!...",
 					});
 				}
 			} catch (error) {
@@ -301,7 +300,7 @@ function App() {
 				Swal.close();
 				Swal.fire({
 					icon: "error",
-					title: "Failed to send BNB!",
+					title: "Failed to send ETH!",
 				});
 				return;
 			}
@@ -314,19 +313,13 @@ function App() {
 				const web3auth = new Web3Auth({
 					clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
 					chainConfig: {
-						// chainId: "0x1",
-						// rpcTarget: "https://rpc.ankr.com/eth",
 						chainNamespace: "eip155",
-						chainId: "0x61",
-						rpcTarget: "https://rpc.ankr.com/bsc_testnet_chapel",
-						displayName: "Binance SmartChain Testnet",
-						blockExplorer: "https://testnet.bscscan.com",
-						ticker: "BNB",
-						tickerName: "BNB",
-						// displayName: "Ethereum Mainnet",
-						// blockExplorer: "https://etherscan.io/",
-						// ticker: "ETH",
-						// tickerName: "Ethereum",
+						chainId: "Ox5",
+						rpcTarget: "https://rpc.ankr.com/eth_goerli",
+						displayName: "Goerli Testnet",
+						blockExplorer: "https://goerli.etherscan.io",
+						ticker: "ETH",
+						tickerName: "Ethereum",
 					},
 				});
 				setWeb3auth(web3auth);
@@ -340,32 +333,62 @@ function App() {
 	}, []);
 
 	return (
-		<div className="App">
+		<div className="h-full flex items-center justify-center text-lg">
 			{address ? (
-				<>
+				<div>
 					<p>Connected: true</p>
 					<p>Your wallet: {address}</p>
-					<p>Your bnb balance: {balance} BNB</p>
-					<button onClick={handleLogout}>Disconnect</button> <br />
-					<div style={{ marginTop: "20px" }}>
-						<input type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
-						<button onClick={signMessage} style={{ marginLeft: "20px" }}>
+					<p>Your eth balance: {balance} ETH</p>
+					<div className="mt-6">
+						<input
+							type="text"
+							className="bg-slate-200 px-2 py-1 outline-none rounded-md"
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+						/>
+						<button
+							onClick={signMessage}
+							className="bg-teal-600 px-2 py-1 text-white text-lg border-none rounded-md ml-4">
 							Sign Message
-						</button>
+						</button>{" "}
+						<br />
 						{signature && <p>{signature}</p>}
+						<div className="mt-4">
+							<input
+								type="text"
+								className="bg-slate-200 px-2 py-1 outline-none rounded-md"
+								value={receiver}
+								onChange={(e) => setReceiver(e.target.value)}
+							/>
+							<button
+								onClick={sendETH}
+								className="bg-teal-600 px-2 py-1 text-white text-lg border-none rounded-md ml-4">
+								Send ETH
+							</button>
+							{txHash && <p className="mt-2">Last Transaction Hash: {txHash}</p>}
+						</div>
 					</div>
-					<div style={{ marginTop: "20px" }}>
-						<input type="text" value={receiver} onChange={(e) => setReceiver(e.target.value)} />
-						<button onClick={sendBNB} style={{ marginLeft: "20px" }}>
-							Send BNB
+					<div className="mt-6 flex flex-col gap-4">
+						<div className="flex gap-2">
+							Wallet Approved: {`${isWalletApproved}`}
+							<button
+								disabled={isWalletApproved}
+								onClick={approveWallet}
+								className={`${
+									isWalletApproved ? "cursor-not-allowed" : ""
+								} bg-teal-600 px-2 py-1 text-white text-lg border-none rounded-md ml-4`}>
+								Approve Wallet
+							</button>
+						</div>
+						<button onClick={handleLogout} className="bg-red-500 text-white text-xl py-2 rounded-md">
+							Disconnect Wallet
 						</button>
-						{txHash && <p>Last Transaction Hash: {txHash}</p>}
 					</div>
-					<p>Wallet Approved: {`${isWalletApproved}`}</p>
-					<button onClick={approveWallet}>Approve Wallet</button>
-				</>
+				</div>
 			) : (
-				<button onClick={handleSubmit}>Click to login</button>
+				<button onClick={handleSubmit} className="bg-teal-600 px-2 py-1 text-white text-2xl border-none rounded-lg">
+					Login
+				</button>
 			)}
 		</div>
 	);
