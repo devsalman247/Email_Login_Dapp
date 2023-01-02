@@ -632,7 +632,7 @@ function App() {
 	}, []);
 
 	return (
-		<div className="h-full flex items-center justify-center text-lg pt-4">
+		<div className="h-full flex items-center justify-center text-lg py-4">
 			{address ? (
 				<div>
 					<p>Connected: true</p>
