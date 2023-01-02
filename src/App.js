@@ -157,17 +157,49 @@ function App() {
 
 	// handle signing message
 	const signMessage = async () => {
-		// console.log(message);
-		if (!message) {
-			console.log("No message to sign");
-			return;
-		} else {
-			const signatur = await web3.eth.personal.sign(message, address);
-			if (signatur) {
-				setMessage("");
-				setSignature(signatur);
+		try {
+			if (!message) {
+				console.log("No message to sign");
+				Swal.fire({
+					icon: "error",
+					title: "Please enter some message to sign!...",
+				});
+				return;
+			} else {
+				Swal.fire({
+					title: "Signing message",
+					html: "Please wait!",
+					didOpen: () => {
+						Swal.showLoading();
+					},
+					allowOutsideClick: false,
+				});
+				const signatur = await web3.eth.personal.sign(message, address);
+				console.log(signatur);
+				if (signatur) {
+					setMessage("");
+					setSignature(signatur);
+					Swal.close();
+					Swal.fire({
+						icon: "Success",
+						title: "Successfully signed message!",
+					});
+				} else {
+					Swal.close();
+					Swal.fire({
+						icon: "error",
+						title: "Failed to sign message!...",
+					});
+				}
 			}
-			console.log(signatur);
+		} catch (error) {
+			console.log(error);
+			Swal.close();
+			Swal.fire({
+				icon: "error",
+				title: "Failed to sign message!...",
+			});
+			return;
 		}
 	};
 
@@ -188,14 +220,15 @@ function App() {
 	};
 
 	// handle sending eth
-	const sendETH = async () => {
+	const sendBNB = async () => {
 		if (receiver) {
 			Swal.fire({
-				title: `Sending ETH to ${receiver.slice(0, 5)}...`,
+				title: `Sending BNB to ${receiver.slice(0, 5)}...`,
 				html: "Please wait!",
 				didOpen: () => {
 					Swal.showLoading();
 				},
+				allowOutsideClick: false,
 			});
 			try {
 				const amount = web3.utils.toWei("0.01");
@@ -206,18 +239,20 @@ function App() {
 				});
 				console.log(receipt);
 				if (receipt) {
+					const balance = web3.utils.fromWei(await web3.eth.getBalance(address));
 					Swal.close();
 					Swal.fire({
 						icon: "Success",
-						title: "Successfully sent 0.01 ETH!",
+						title: "Successfully sent 0.01 BNB!",
 					});
 					setReceiver("");
+					setBalance(balance);
 					setTxHash(receipt.transactionHash);
 				} else {
 					Swal.close();
 					Swal.fire({
 						icon: "error",
-						title: "Failed to send ETH!...",
+						title: "Failed to send BNB!...",
 					});
 				}
 			} catch (error) {
@@ -225,7 +260,7 @@ function App() {
 				Swal.close();
 				Swal.fire({
 					icon: "error",
-					title: "Failed to send ETH!",
+					title: "Failed to send BNB!",
 				});
 				return;
 			}
@@ -249,6 +284,7 @@ function App() {
 				didOpen: () => {
 					Swal.showLoading();
 				},
+				allowOutsideClick: false,
 			});
 			try {
 				const contract_instance = await initializeContract(DEV_COIN_CONTRACT_ABI, DEV_COIN_CONTRACT_ADDRESS);
@@ -306,6 +342,7 @@ function App() {
 			didOpen: () => {
 				Swal.showLoading();
 			},
+			allowOutsideClick: false,
 		});
 		try {
 			const contract_instance = await initializeContract(DOX_V1_CONTRACT_ABI, DOX_V1_CONTRACT_ADDRESS);
@@ -399,11 +436,12 @@ function App() {
 	// mint DOX NFT
 	const mintNFT = async () => {
 		Swal.fire({
-			title: "Minting",
+			title: "Minting NFT...",
 			html: "Please wait!",
 			didOpen: () => {
 				Swal.showLoading();
 			},
+			allowOutsideClick: false,
 		});
 		try {
 			const contract_instance = await initializeContract(DOX_GOLD_CONTRACT_ABI, DOX_GOLD_CONTRACT_ADDRESS);
@@ -443,6 +481,7 @@ function App() {
 			didOpen: () => {
 				Swal.showLoading();
 			},
+			allowOutsideClick: false,
 		});
 		try {
 			const staking_contract_instance = await initializeContract(
@@ -614,8 +653,9 @@ function App() {
 							className="bg-teal-600 px-2 py-1 text-white text-lg border-none rounded-md ml-4">
 							Sign Message
 						</button>
-						<br />
-						{signature && <p>{signature}</p>}
+						{signature && (
+							<p className="mt-2">Signed Message Hash: {signature.slice(0, 6) + "..." + signature.slice(-5)}</p>
+						)}
 						<div className="mt-4">
 							<input
 								type="text"
@@ -625,11 +665,11 @@ function App() {
 								onChange={(e) => setReceiver(e.target.value)}
 							/>
 							<button
-								onClick={() => sendETH()}
+								onClick={() => sendBNB()}
 								className="bg-teal-600 px-2 py-1 text-white text-lg border-none rounded-md ml-4">
-								Send ETH
+								Send BNB
 							</button>
-							{txHash && <p className="mt-2">Last Transaction Hash: {txHash}</p>}
+							{txHash && <p className="mt-2">Last Transaction Hash: {txHash.slice(0, 6) + "..." + txHash.slice(-5)}</p>}
 						</div>
 						<div className="mt-4">
 							<input
@@ -648,21 +688,11 @@ function App() {
 						</div>
 					</div>
 					<div className="mt-6 flex flex-col gap-4">
-						<div className="flex gap-2">
-							Wallet Approved: {`${isWalletApproved}`}
-							<button
-								disabled={isWalletApproved}
-								onClick={() => approveWallet()}
-								className={`px-2 py-1 text-lg border-none rounded-md ml-20 ${
-									isWalletApproved ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
-								}`}>
-								Approve Wallet
-							</button>
-						</div>
 						<div>
 							<h3 className="bg-teal-600 text-white text-center text-xl font-semibold px-4 py-1 mb-2 rounded-tr-md rounded-bl-md">
 								DOX GOLD NFTs
 							</h3>
+							<p>Wallet Approved: {`${isWalletApproved}`}</p>
 							<p>Your NFTs Balance: {nfts.gold.length + nfts.staked.length}</p>
 							{nfts.gold.length > 0 ? (
 								<div>
@@ -683,43 +713,58 @@ function App() {
 							<p>Total Supply: {nfts.totalSupply}</p>
 							<p>Max per Wallet: 10</p>
 							<div className="flex justify-evenly gap-4 mt-4">
-								<button
-									disabled={nfts.balance >= 10}
-									onClick={() => mintNFT()}
-									className={`px-10 py-1 text-lg border-none rounded-md ${
-										nfts.balance >= 10 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
-									}`}>
-									Mint NFT
-								</button>
-								{isNFTsApproved ? (
+								{isWalletApproved ? (
 									<>
 										<button
-											disabled={nfts.balance === 0}
-											onClick={() => stakeNFT([nfts.gold[0]])}
+											disabled={nfts.balance >= 10}
+											onClick={() => mintNFT()}
 											className={`px-10 py-1 text-lg border-none rounded-md ${
-												nfts.balance === 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
+												nfts.balance >= 10 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
 											}`}>
-											Stake NFT
+											Mint NFT
 										</button>
-										<button
-											disabled={nfts.staked.length === 0}
-											onClick={() => unstakeNFTs()}
-											className={`px-10 py-1 text-lg border-none rounded-md ${
-												nfts.staked.length === 0
-													? "cursor-not-allowed bg-teal-200 text-teal-700"
-													: "bg-teal-600 text-white"
-											}`}>
-											Unstake NFTs
-										</button>
+										{isNFTsApproved ? (
+											<>
+												<button
+													disabled={nfts.balance == 0}
+													onClick={() => stakeNFT([nfts.gold[0]])}
+													className={`px-10 py-1 text-lg border-none rounded-md ${
+														nfts.balance == 0
+															? "cursor-not-allowed bg-teal-200 text-teal-700"
+															: "bg-teal-600 text-white"
+													}`}>
+													Stake NFT
+												</button>
+												<button
+													disabled={nfts.staked.length === 0}
+													onClick={() => unstakeNFTs()}
+													className={`px-10 py-1 text-lg border-none rounded-md ${
+														nfts.staked.length === 0
+															? "cursor-not-allowed bg-teal-200 text-teal-700"
+															: "bg-teal-600 text-white"
+													}`}>
+													Unstake NFTs
+												</button>
+											</>
+										) : (
+											<button
+												disabled={nfts.balance == 0}
+												onClick={() => approveNFTs()}
+												className={`px-10 py-1 text-lg border-none rounded-md ${
+													nfts.balance == 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
+												}`}>
+												Approve NFTs
+											</button>
+										)}
 									</>
 								) : (
 									<button
-										disabled={nfts.balance === 0}
-										onClick={() => approveNFTs()}
-										className={`px-10 py-1 text-lg border-none rounded-md ${
-											nfts.balance === 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
+										disabled={isWalletApproved}
+										onClick={() => approveWallet()}
+										className={`w-full px-2 py-1 text-xl font-semibold border-none rounded-md ${
+											isWalletApproved ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
 										}`}>
-										Approve NFTs
+										Approve Wallet
 									</button>
 								)}
 							</div>
