@@ -3,7 +3,6 @@ import { Web3Auth } from "@web3auth/modal";
 import Web3 from "web3";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-
 import {
 	DOX_V1_CONTRACT_ADDRESS,
 	DOX_V1_CONTRACT_ABI,
@@ -12,7 +11,7 @@ import {
 	DOX_GOLD_CONTRACT_ADDRESS,
 	DOX_GOLD_CONTRACT_ABI,
 	DOX_V1_DECIMALS,
-} from "../constants/constants";
+} from "./constants/constants";
 
 function App() {
 	const [address, setAddress] = useState("");
@@ -61,10 +60,10 @@ function App() {
 		const balance = web3.utils.fromWei(
 			await web3.eth.getBalance(userAccounts[0]) // Balance is in wei
 		);
-		setBalance(balance);
+		setBalance(balance, typeof balance, "vnvbnbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
 		// Get the user's DEV balance
-		await getDevBalance();
+		// await getDevBalance();
 	};
 
 	const getDevBalance = async () => {
@@ -112,10 +111,7 @@ function App() {
 			},
 		});
 		try {
-			const contract_instance = await initializeContract(
-				DOX_V1_CONTRACT_ABI,
-				"0xF3e5a8b4b290F0841506076E086f09Ec1184fC78"
-			);
+			const contract_instance = await initializeContract(DOX_V1_CONTRACT_ABI, DOX_V1_CONTRACT_ADDRESS);
 			const data = await contract_instance.methods
 				.approve(DOX_GOLD_CONTRACT_ADDRESS, BigInt(10000000000000 * DOX_V1_DECIMALS))
 				.send({ from: address });
@@ -270,44 +266,57 @@ function App() {
 		}
 	};
 
+	const init = async () => {
+		try {
+			const web3auth = new Web3Auth({
+				clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
+				chainConfig: {
+					// Binance Smart Chain Testnet
+					chainNamespace: "eip155",
+					chainId: "0x61",
+					rpcTarget: "https://data-seed-prebsc-2-s3.binance.org:8545",
+					displayName: "Binance SmartChain Testnet",
+					blockExplorer: "https://testnet.bscscan.com",
+					ticker: "BNB",
+					tickerName: "BNB",
+
+					// Ethereum Goerli Testnet
+
+					// chainNamespace: "eip155",
+					// chainId: "0x5",
+					// rpcTarget: "https://eth-goerli.g.alchemy.com/v2/VjKY5tskg7dqhMYjET9xsxuoHLWiP-dN",
+					// displayName: "Goerli Testnet",
+					// blockExplorer: "https://goerli.etherscan.io",
+					// ticker: "ETH",
+					// tickerName: "Ethereum",
+
+					// Ethereum Mainnet
+
+					// chainNamespace: "eip155",
+					// chainId: "0x1",
+					// rpcTarget: "https://eth-mainnet.g.alchemy.com/v2/j6UTbCCbGnGifDTJGKAmsAKL0MoNdIL1",
+					// displayName: "Ethereum Mainnet",
+					// blockExplorer: "https://etherscan.io",
+					// ticker: "ETH",
+					// tickerName: "Ethereum",
+				},
+			});
+			setWeb3auth(web3auth);
+			await web3auth.initModal();
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
 	useEffect(() => {
-		const init = async () => {
-			try {
-				const web3auth = new Web3Auth({
-					clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
-					chainConfig: {
-						// Ethereum Goerli Testnet
-
-						chainNamespace: "eip155",
-						chainId: "0x5",
-						rpcTarget: "https://eth-goerli.g.alchemy.com/v2/VjKY5tskg7dqhMYjET9xsxuoHLWiP-dN",
-						displayName: "Goerli Testnet",
-						blockExplorer: "https://goerli.etherscan.io",
-						ticker: "ETH",
-						tickerName: "Ethereum",
-
-						// Ethereum Mainnet
-
-						// chainNamespace: "eip155",
-						// chainId: "0x1",
-						// rpcTarget: "https://eth-mainnet.g.alchemy.com/v2/j6UTbCCbGnGifDTJGKAmsAKL0MoNdIL1",
-						// displayName: "Ethereum Mainnet",
-						// blockExplorer: "https://etherscan.io",
-						// ticker: "ETH",
-						// tickerName: "Ethereum",
-					},
-				});
-				setWeb3auth(web3auth);
-				await web3auth.initModal();
-			} catch (error) {
-				console.error(error);
-			}
-		};
-		init();
 		if (address) {
 			checkApproval();
 			getDevBalance();
 		}
+	}, [web3, address]);
+
+	useEffect(() => {
+		init();
 	}, []);
 
 	return (
