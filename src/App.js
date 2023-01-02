@@ -109,6 +109,7 @@ function App() {
 			let totalSupply = 0;
 			let gold = [];
 			let staked = [];
+			let isNFTsApproved = false;
 			const contract_instance = await initializeContract(DOX_GOLD_CONTRACT_ABI, DOX_GOLD_CONTRACT_ADDRESS);
 			const staking_contract_instance = await initializeContract(
 				DOX_GOLD_STAKING_CONTRACT_ABI,
@@ -116,6 +117,9 @@ function App() {
 			);
 			if (address) {
 				balance = await contract_instance.methods.balanceOf(address).call();
+				isNFTsApproved = await contract_instance.methods
+					.isApprovedForAll(address, DOX_GOLD_STAKING_CONTRACT_ADDRESS)
+					.call();
 				gold = await contract_instance.methods
 					.tokensOfOwner(address)
 					.call()
@@ -144,6 +148,7 @@ function App() {
 				gold,
 				staked,
 			});
+			setIsNFTsApproved(isNFTsApproved);
 		} catch (error) {
 			console.log(error);
 			return;
@@ -334,6 +339,63 @@ function App() {
 		}
 	};
 
+	// approving user's nfts for staking
+	const approveNFTs = async () => {
+		Swal.fire({
+			title: "Approving NFTs...",
+			html: "Please wait!",
+			didOpen: () => {
+				Swal.showLoading();
+			},
+			allowOutsideClick: false,
+		});
+		try {
+			if (address) {
+				const contract_instance = await initializeContract(DOX_GOLD_CONTRACT_ABI, DOX_GOLD_CONTRACT_ADDRESS);
+				const goldApproved = await contract_instance.methods
+					.setApprovalForAll(DOX_GOLD_STAKING_CONTRACT_ADDRESS, true)
+					.send({ from: address })
+					.then((res) => res)
+					.catch((err) => {
+						console.log(err);
+						return;
+					});
+
+				console.log(goldApproved, "gold");
+				if (goldApproved) {
+					Swal.close();
+					Swal.fire({
+						icon: "Success",
+						title: "Successfully approved!",
+					});
+					setIsNFTsApproved(goldApproved);
+				} else {
+					Swal.close();
+					Swal.fire({
+						icon: "error",
+						title: "Failed to approve...!",
+					});
+					return;
+				}
+			} else {
+				Swal.close();
+				Swal.fire({
+					icon: "error",
+					title: "Please connect your wallet...!",
+				});
+				return;
+			}
+		} catch (error) {
+			console.log(error);
+			Swal.close();
+			Swal.fire({
+				icon: "error",
+				title: "Failed to approve...!",
+			});
+			return;
+		}
+	};
+
 	// mint DOX NFT
 	const mintNFT = async () => {
 		Swal.fire({
@@ -410,6 +472,66 @@ function App() {
 			Swal.fire({
 				icon: "error",
 				title: "Failed to stake.Something unknown happened!",
+			});
+			return;
+		}
+	};
+
+	// unstake DOX NFTs
+	const unstakeNFTs = async () => {
+		Swal.fire({
+			title: "Unstaking NFTs...",
+			html: "Please wait!",
+			didOpen: () => {
+				Swal.showLoading();
+			},
+			allowOutsideClick: false,
+		});
+		try {
+			if (address) {
+				const contract_instance = await initializeContract(
+					DOX_GOLD_STAKING_CONTRACT_ABI,
+					DOX_GOLD_STAKING_CONTRACT_ADDRESS
+				);
+				const data = await contract_instance.methods
+					.unstakeAll()
+					.send({ from: address })
+					.then((res) => res)
+					.catch((err) => {
+						console.log(err);
+						return;
+					});
+
+				console.log(data, "goldIsUnstaking");
+				if (data) {
+					Swal.close();
+					Swal.fire({
+						icon: "Success",
+						title: "Successfully unstaked!",
+					});
+				} else {
+					Swal.close();
+					Swal.fire({
+						icon: "error",
+						title: "Failed to unstake...!",
+					});
+					return;
+				}
+				getNfts();
+			} else {
+				Swal.close();
+				Swal.fire({
+					icon: "error",
+					title: "Please connect your wallet...!",
+				});
+				return;
+			}
+		} catch (error) {
+			console.log(error);
+			Swal.close();
+			Swal.fire({
+				icon: "error",
+				title: "Failed to unstake...!",
 			});
 			return;
 		}
@@ -541,7 +663,7 @@ function App() {
 							<h3 className="bg-teal-600 text-white text-center text-xl font-semibold px-4 py-1 mb-2 rounded-tr-md rounded-bl-md">
 								DOX GOLD NFTs
 							</h3>
-							<p>Your NFTs Balance: {nfts.balance}</p>
+							<p>Your NFTs Balance: {nfts.gold.length + nfts.staked.length}</p>
 							{nfts.gold.length > 0 ? (
 								<div>
 									Minted NFTs:
@@ -570,14 +692,26 @@ function App() {
 									Mint NFT
 								</button>
 								{isNFTsApproved ? (
-									<button
-										disabled={nfts.balance === 0}
-										onClick={() => stakeNFT([nfts.gold[0]])}
-										className={`px-10 py-1 text-lg border-none rounded-md ${
-											nfts.balance === 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
-										}`}>
-										Stake NFT
-									</button>
+									<>
+										<button
+											disabled={nfts.balance === 0}
+											onClick={() => stakeNFT([nfts.gold[0]])}
+											className={`px-10 py-1 text-lg border-none rounded-md ${
+												nfts.balance === 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
+											}`}>
+											Stake NFT
+										</button>
+										<button
+											disabled={nfts.staked.length === 0}
+											onClick={() => unstakeNFTs()}
+											className={`px-10 py-1 text-lg border-none rounded-md ${
+												nfts.staked.length === 0
+													? "cursor-not-allowed bg-teal-200 text-teal-700"
+													: "bg-teal-600 text-white"
+											}`}>
+											Unstake NFTs
+										</button>
+									</>
 								) : (
 									<button
 										disabled={nfts.balance === 0}
