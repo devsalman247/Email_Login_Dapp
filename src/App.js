@@ -1,5 +1,6 @@
 /* global BigInt */
 import { Web3Auth } from "@web3auth/modal";
+import { MetamaskAdapter } from "@web3auth/metamask-adapter";
 import Web3 from "web3";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
@@ -27,6 +28,8 @@ function App() {
 	const [isNFTsApproved, setIsNFTsApproved] = useState(false);
 	const [receiver, setReceiver] = useState("");
 	const [devReceiver, setDevReceiver] = useState("");
+	const [nftReceiver, setNFTReceiver] = useState("");
+	const [selectedNFT, setSelectedNFT] = useState("");
 	const [txHash, setTxHash] = useState("");
 	const [devTxHash, setDevTxHash] = useState("");
 	const [chainId, setChainId] = useState(0);
@@ -576,6 +579,60 @@ function App() {
 		}
 	};
 
+	// transfer NFT
+	const transferNFT = async () => {
+		if (!nftReceiver) {
+			Swal.fire({
+				icon: "error",
+				title: "Please enter receiver address!",
+			});
+			return;
+		} else if (!selectedNFT) {
+			Swal.fire({
+				icon: "error",
+				title: "Please select NFT to transfer!",
+			});
+			return;
+		} else {
+			try {
+				Swal.fire({
+					title: "Transferring NFT",
+					html: "Please wait!",
+					didOpen: () => {
+						Swal.showLoading();
+					},
+					allowOutsideClick: false,
+				});
+				const contract_instance = await initializeContract(DOX_GOLD_CONTRACT_ABI, DOX_GOLD_CONTRACT_ADDRESS);
+				const data = await contract_instance.methods
+					.transferFrom(address, nftReceiver, selectedNFT)
+					.send({ from: address });
+				console.log(data, "data");
+				if (data) {
+					Swal.close();
+					Swal.fire({
+						icon: "Success",
+						title: "Successfully transferred NFT!",
+					});
+					getNfts();
+				} else {
+					Swal.close();
+					Swal.fire({
+						icon: "error",
+						title: "Failed to transfer NFT!",
+					});
+				}
+			} catch (error) {
+				Swal.close();
+				Swal.fire({
+					icon: "error",
+					title: "Failed to transfer NFT!",
+				});
+				return;
+			}
+		}
+	};
+
 	// initializing web3auth instance
 	const init = async () => {
 		try {
@@ -612,6 +669,23 @@ function App() {
 					// tickerName: "Ethereum",
 				},
 			});
+			const metamaskAdapter = new MetamaskAdapter({
+				clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
+				sessionTime: 3600, // 1 hour in seconds
+				// web3AuthNetwork: "cyan",
+				chainConfig: {
+					// Binance Smart Chain Testnet
+					chainNamespace: "eip155",
+					chainId: "0x61",
+					rpcTarget: "https://data-seed-prebsc-2-s3.binance.org:8545",
+					displayName: "Binance SmartChain Testnet",
+					blockExplorer: "https://testnet.bscscan.com",
+					ticker: "BNB",
+					tickerName: "BNB",
+				},
+			});
+			web3auth.configureAdapter(metamaskAdapter);
+
 			setWeb3auth(web3auth);
 			await web3auth.initModal();
 		} catch (error) {
@@ -712,7 +786,7 @@ function App() {
 							)}
 							<p>Total Supply: {nfts.totalSupply}</p>
 							<p>Max per Wallet: 10</p>
-							<div className="flex justify-evenly gap-4 mt-4">
+							<div className="flex justify-evenly gap-4 my-4">
 								{isWalletApproved ? (
 									<>
 										<button
@@ -767,6 +841,36 @@ function App() {
 										Approve Wallet
 									</button>
 								)}
+							</div>
+							<div className="flex flex-col gap-4">
+								<div className="flex gap-4">
+									<input
+										type="text"
+										value={nftReceiver}
+										onChange={(e) => setNFTReceiver(e.target.value)}
+										placeholder="Enter NFT receiver address"
+										className="bg-slate-200 px-2 py-1 outline-none rounded-md"
+									/>
+									<select
+										value={selectedNFT}
+										onChange={(e) => setSelectedNFT(e.target.value)}
+										className="px-2 outline-none">
+										<option value="">Select NFT Id</option>
+										{nfts.gold.map((nft, index) => (
+											<option value={nft} key={index}>
+												{nft}
+											</option>
+										))}
+									</select>
+								</div>
+								<button
+									disabled={nfts.balance == 0}
+									onClick={() => transferNFT()}
+									className={`px-10 py-1 text-lg border-none rounded-md bg-teal-600 text-white ${
+										nfts.balance == 0 ? "cursor-not-allowed bg-teal-200 text-teal-700" : "bg-teal-600 text-white"
+									}`}>
+									Transfer NFT
+								</button>
 							</div>
 						</div>
 						<button onClick={() => handleLogout()} className="bg-red-500 text-white text-xl py-2 rounded-md">
