@@ -184,7 +184,7 @@ function App() {
 					setSignature(signatur);
 					Swal.close();
 					Swal.fire({
-						icon: "Success",
+						icon: "success",
 						title: "Successfully signed message!",
 					});
 				} else {
@@ -637,7 +637,7 @@ function App() {
 	const init = async () => {
 		try {
 			const web3auth = new Web3Auth({
-				clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
+				clientId: process.env.REACT_APP_CLIENT_ID,
 				chainConfig: {
 					// Binance Smart Chain Testnet
 					chainNamespace: "eip155",
@@ -670,7 +670,7 @@ function App() {
 				},
 			});
 			const metamaskAdapter = new MetamaskAdapter({
-				clientId: "BD3vOjiwGiSFmmJ59O_sk3_g26oRtYnmn3OPNN7DmhWuZppFypQY2ETVWH8bMTRlPWtCRC0im1hkqNBHLODvFLw",
+				clientId: process.env.REACT_APP_CLIENT_ID,
 				sessionTime: 3600, // 1 hour in seconds
 				// web3AuthNetwork: "cyan",
 				chainConfig: {
