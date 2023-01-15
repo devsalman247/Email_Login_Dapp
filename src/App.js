@@ -17,7 +17,7 @@ import {
 } from "./constants/constants";
 
 function App() {
-	// const [address, setAddress] = useState("");
+	const [address, setAddress] = useState("");
 	const [web3auth, setWeb3auth] = useState(null);
 	const [message, setMessage] = useState("");
 	const [signature, setSignature] = useState("");
