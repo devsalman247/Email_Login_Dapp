@@ -646,7 +646,7 @@ function App() {
 					displayName: "Binance SmartChain Testnet",
 					blockExplorer: "https://testnet.bscscan.com",
 					ticker: "BNB",
-					tickerName: "ETH",
+					tickerName: "BNB",
 
 					// Ethereum Goerli Testnet
 
